@@ -51,6 +51,10 @@ public:
     void zero(size_type, size_type);
     void identity(size_type);
 
+    template <typename S>
+    friend Matrix<S> transpose(const Matrix<S> &);
+    Matrix &transpose();
+
     void row_switching(size_type, size_type);
     void row_multiplication(value_type, size_type);
     void row_addition(size_type, value_type, size_type);
@@ -151,6 +155,44 @@ void Matrix<T>::identity(const Matrix<T>::size_type order)
 }
 
 template <typename T>
+Matrix<T> transpose(const Matrix<T> &rhs)
+{
+    const typename Matrix<T>::size_type m = rhs.matrix.size(), n = rhs.matrix.front().size();
+    Matrix<T> result(n, m);
+    for (typename Matrix<T>::size_type i = 0u; i < n; ++i)
+    {
+        for (typename Matrix<T>::size_type j = 0u; j < m; ++j)
+        {
+            result.matrix[i][j] = rhs.matrix[j][i];
+        }
+    }
+
+    return result;
+}
+
+template <typename T>
+Matrix<T> &Matrix<T>::transpose()
+{
+    const size_type m = matrix.size(), n = matrix.front().size();
+    if (m == n)
+    {
+        for (size_type i = 1u; i < m; ++i)
+        {
+            for (size_type j = 0u; j < i; ++j)
+            {
+                std::swap(matrix[i][j], matrix[j][i]);
+            }
+        }
+    }
+    else
+    {
+        *this = transpose(*this);
+    }
+
+    return *this;
+}
+
+template <typename T>
 void Matrix<T>::row_switching(const Matrix<T>::size_type i,
     const Matrix<T>::size_type j)
 {
@@ -176,7 +218,7 @@ void Matrix<T>::row_addition(const Matrix<T>::size_type i,
     const size_type size = matrix.front().size();
     for (size_type k = 0u; k < size; ++k)
     {
-        matrix[i][k] += alpha * matrix[j][k];
+        matrix[i][k] = std::fma(alpha, matrix[j][k], matrix[i][k]);
     }
 }
 
@@ -331,7 +373,7 @@ Matrix<T> operator *(const Matrix<T> &lhs, const Matrix<T> &rhs)
         {
             for (typename Matrix<T>::size_type k = 0u; k < l; ++k)
             {
-                result.matrix[i][j] += lhs.matrix[i][k] * rhs.matrix[k][j];
+                result.matrix[i][j] = std::fma(lhs.matrix[i][k], rhs.matrix[k][j], result.matrix[i][j]);
             }
         }
     }

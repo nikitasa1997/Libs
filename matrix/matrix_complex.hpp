@@ -3,7 +3,7 @@
 
 #include <complex>
 
-#include "matrix.hpp"
+#include "./matrix.hpp"
 
 template <typename T>
 class Matrix<std::complex<T>>
@@ -47,6 +47,10 @@ public:
 
     void zero(size_type, size_type);
     void identity(size_type);
+
+    template <typename S>
+    friend Matrix<std::complex<S>> transpose(const Matrix<std::complex<S>> &);
+    Matrix &transpose();
 
     void row_switching(size_type, size_type);
     void row_multiplication(value_type, size_type);
@@ -145,6 +149,44 @@ void Matrix<std::complex<T>>::identity(const Matrix<std::complex<T>>::size_type 
     {
         matrix[i][i] = 1.0;
     }
+}
+
+template <typename T>
+Matrix<std::complex<T>> transpose(const Matrix<std::complex<T>> &rhs)
+{
+    const typename Matrix<std::complex<T>>::size_type m = rhs.matrix.size(), n = rhs.matrix.front().size();
+    Matrix<std::complex<T>> result(n, m);
+    for (typename Matrix<std::complex<T>>::size_type i = 0u; i < n; ++i)
+    {
+        for (typename Matrix<std::complex<T>>::size_type j = 0u; j < m; ++j)
+        {
+            result.matrix[i][j] = rhs.matrix[j][i];
+        }
+    }
+
+    return result;
+}
+
+template <typename T>
+Matrix<std::complex<T>> &Matrix<std::complex<T>>::transpose()
+{
+    const size_type m = matrix.size(), n = matrix.front().size();
+    if (m == n)
+    {
+        for (size_type i = 1u; i < m; ++i)
+        {
+            for (size_type j = 0u; j < i; ++j)
+            {
+                std::swap(matrix[i][j], matrix[j][i]);
+            }
+        }
+    }
+    else
+    {
+        *this = transpose(*this);
+    }
+
+    return *this;
 }
 
 template <typename T>
